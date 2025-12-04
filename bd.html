@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini-Projet Base de Données - Gestion de Bibliothèque</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide icons (CDN) -->
+  <script src="https://unpkg.com/lucide@0.258.0/dist/lucide.iife.js"></script>
+
+  <style>
+    /* petite règle pour scrollbar dans les blocs de code */
+    .code-block { max-height: 340px; overflow:auto; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+  <div class="max-w-6xl mx-auto p-6">
+    <div class="bg-white rounded-lg shadow-2xl p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-indigo-900 mb-2">Mini-Projet Base de Données</h1>
+        <p class="text-xl text-gray-600">Gestion de Bibliothèque Universitaire</p>
+        <p class="text-sm text-gray-500 mt-2">Module: Relational Database - Oracle DBMS</p>
+      </div>
+
+      <!-- phases buttons -->
+      <div id="phasesButtons" class="grid grid-cols-7 gap-2 mb-8"></div>
+
+      <!-- content area -->
+      <div id="phaseContent" class="bg-white rounded-lg border-2 border-indigo-200 p-6 min-h-[500px]">
+        <!-- titre + contenu seront injectés par JS -->
+      </div>
+
+      <!-- navigation -->
+      <div class="mt-8 flex justify-between">
+        <button id="prevBtn" class="px-6 py-2 rounded-lg font-semibold bg-indigo-600 text-white hover:bg-indigo-700">← Précédent</button>
+        <button id="nextBtn" class="px-6 py-2 rounded-lg font-semibold bg-indigo-600 text-white hover:bg-indigo-700">Suivant →</button>
+      </div>
+
+      <div class="mt-8 bg-indigo-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-indigo-900 mb-2">📝 Livrables:</h3>
+        <ul class="text-sm space-y-1 text-gray-700">
+          <li>✅ Présentation PowerPoint (10 minutes)</li>
+          <li>✅ Script SQL complet (DDL + DML)</li>
+          <li>✅ Screenshots des exécutions</li>
+          <li>✅ Documentation technique</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // initialise lucide icons
+    window.addEventListener('load', function () {
+      if (window.lucide) window.lucide.createIcons();
+    });
+
+    // Définition des phases (contenu HTML en tant que string)
+    const phases = [
+      {
+        id: 0,
+        title: "Phase 1: Introduction du Domaine",
+        icon: "book-open",
+        content: `
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600">Système de Gestion de Bibliothèque Universitaire</h3>
+
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <h4 class="font-semibold mb-2">Contexte:</h4>
+              <p>Une bibliothèque universitaire moderne nécessitant un système pour gérer les livres, les membres, les emprunts, et le personnel.</p>
+            </div>
+
+            <div class="bg-green-50 p-4 rounded-lg">
+              <h4 class="font-semibold mb-2">Entités Principales:</h4>
+              <ul class="list-disc ml-6 space-y-1">
+                <li><strong>LIVRE</strong>: Ressources disponibles</li>
+                <li><strong>MEMBRE</strong>: Étudiants et professeurs</li>
+                <li><strong>EMPRUNT</strong>: Transactions d'emprunt</li>
+                <li><strong>AUTEUR</strong>: Auteurs des livres</li>
+                <li><strong>CATEGORIE</strong>: Classification des livres</li>
+                <li><strong>BIBLIOTHECAIRE</strong>: Personnel</li>
+              </ul>
+            </div>
+
+            <div class="bg-yellow-50 p-4 rounded-lg">
+              <h4 class="font-semibold mb-2">Fonctionnalités:</h4>
+              <ul class="list-disc ml-6 space-y-1">
+                <li>Gestion du catalogue de livres</li>
+                <li>Inscription et gestion des membres</li>
+                <li>Suivi des emprunts et retours</li>
+                <li>Gestion des amendes</li>
+                <li>Statistiques et rapports</li>
+              </ul>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 1,
+        title: "Phase 2: Modélisation des Données",
+        icon: "database",
+        content: `
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600">Modèles Conceptuel et Logique</h3>
+
+            <div class="bg-white border-2 border-blue-300 p-4 rounded-lg">
+              <h4 class="font-semibold mb-3">Modèle Conceptuel (ERD):</h4>
+              <div class="space-y-2 text-sm">
+                <p><strong>MEMBRE</strong> (1,n) --- emprunte --- (0,n) <strong>LIVRE</strong></p>
+                <p><strong>LIVRE</strong> (0,n) --- écrit_par --- (1,n) <strong>AUTEUR</strong></p>
+                <p><strong>LIVRE</strong> (0,n) --- appartient_à --- (1,1) <strong>CATEGORIE</strong></p>
+                <p><strong>BIBLIOTHECAIRE</strong> (1,1) --- gère --- (0,n) <strong>EMPRUNT</strong></p>
+              </div>
+            </div>
+
+            <div class="bg-white border-2 border-green-300 p-4 rounded-lg">
+              <h4 class="font-semibold mb-3">Schéma Relationnel:</h4>
+              <div class="space-y-2 text-sm font-mono">
+                <p><strong>CATEGORIE</strong>(id_categorie PK, nom_categorie, description)</p>
+                <p><strong>AUTEUR</strong>(id_auteur PK, nom, prenom, nationalite, date_naissance)</p>
+                <p><strong>LIVRE</strong>(isbn PK, titre, annee_publication, nb_exemplaires, id_categorie FK)</p>
+                <p><strong>LIVRE_AUTEUR</strong>(isbn FK, id_auteur FK) PK(isbn, id_auteur)</p>
+                <p><strong>MEMBRE</strong>(id_membre PK, nom, prenom, email UNIQUE, telephone, date_inscription, type_membre)</p>
+                <p><strong>BIBLIOTHECAIRE</strong>(id_bibliothecaire PK, nom, prenom, email UNIQUE, date_embauche)</p>
+                <p><strong>EMPRUNT</strong>(id_emprunt PK, isbn FK, id_membre FK, id_bibliothecaire FK, date_emprunt, date_retour_prevue, date_retour_reelle, amende)</p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 2,
+        title: "Phase 3: Création de la BD Oracle",
+        icon: "code",
+        content: `
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600">Script SQL - Création des Tables</h3>
+
+            <div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-auto text-xs code-block">
+              <pre><code>
+-- Création de la table CATEGORIE
+CREATE TABLE CATEGORIE (
+    id_categorie NUMBER(10) PRIMARY KEY,
+    nom_categorie VARCHAR2(50) NOT NULL UNIQUE,
+    description VARCHAR2(200)
+);
+
+-- Création de la table AUTEUR
+CREATE TABLE AUTEUR (
+    id_auteur NUMBER(10) PRIMARY KEY,
+    nom VARCHAR2(50) NOT NULL,
+    prenom VARCHAR2(50) NOT NULL,
+    nationalite VARCHAR2(50),
+    date_naissance DATE
+);
+
+-- Création de la table LIVRE
+CREATE TABLE LIVRE (
+    isbn VARCHAR2(20) PRIMARY KEY,
+    titre VARCHAR2(200) NOT NULL,
+    annee_publication NUMBER(4) CHECK (annee_publication > 1000),
+    nb_exemplaires NUMBER(5) CHECK (nb_exemplaires >= 0),
+    id_categorie NUMBER(10) NOT NULL,
+    CONSTRAINT fk_livre_categorie FOREIGN KEY (id_categorie) 
+        REFERENCES CATEGORIE(id_categorie)
+);
+
+-- Création de la table LIVRE_AUTEUR
+CREATE TABLE LIVRE_AUTEUR (
+    isbn VARCHAR2(20),
+    id_auteur NUMBER(10),
+    CONSTRAINT pk_livre_auteur PRIMARY KEY (isbn, id_auteur),
+    CONSTRAINT fk_la_livre FOREIGN KEY (isbn) 
+        REFERENCES LIVRE(isbn) ON DELETE CASCADE,
+    CONSTRAINT fk_la_auteur FOREIGN KEY (id_auteur) 
+        REFERENCES AUTEUR(id_auteur) ON DELETE CASCADE
+);
+
+-- Création de la table MEMBRE
+CREATE TABLE MEMBRE (
+    id_membre NUMBER(10) PRIMARY KEY,
+    nom VARCHAR2(50) NOT NULL,
+    prenom VARCHAR2(50) NOT NULL,
+    email VARCHAR2(100) NOT NULL UNIQUE,
+    telephone VARCHAR2(15),
+    date_inscription DATE DEFAULT SYSDATE,
+    type_membre VARCHAR2(20) CHECK (type_membre IN ('Etudiant', 'Professeur'))
+);
+
+-- Création de la table BIBLIOTHECAIRE
+CREATE TABLE BIBLIOTHECAIRE (
+    id_bibliothecaire NUMBER(10) PRIMARY KEY,
+    nom VARCHAR2(50) NOT NULL,
+    prenom VARCHAR2(50) NOT NULL,
+    email VARCHAR2(100) NOT NULL UNIQUE,
+    date_embauche DATE DEFAULT SYSDATE
+);
+
+-- Création de la table EMPRUNT
+CREATE TABLE EMPRUNT (
+    id_emprunt NUMBER(10) PRIMARY KEY,
+    isbn VARCHAR2(20) NOT NULL,
+    id_membre NUMBER(10) NOT NULL,
+    id_bibliothecaire NUMBER(10) NOT NULL,
+    date_emprunt DATE DEFAULT SYSDATE,
+    date_retour_prevue DATE NOT NULL,
+    date_retour_reelle DATE,
+    amende NUMBER(8,2) DEFAULT 0 CHECK (amende >= 0),
+    CONSTRAINT fk_emprunt_livre FOREIGN KEY (isbn) 
+        REFERENCES LIVRE(isbn),
+    CONSTRAINT fk_emprunt_membre FOREIGN KEY (id_membre) 
+        REFERENCES MEMBRE(id_membre),
+    CONSTRAINT fk_emprunt_biblio FOREIGN KEY (id_bibliothecaire) 
+        REFERENCES BIBLIOTHECAIRE(id_bibliothecaire),
+    CONSTRAINT chk_dates CHECK (date_retour_prevue > date_emprunt)
+);
+              </code></pre>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 3,
+        title: "Phase 4: Utilisateurs, Rôles & Privilèges",
+        icon: "shield",
+        content: `
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600">Administration des Utilisateurs</h3>
+
+            <div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-auto text-xs code-block">
+              <pre><code>
+-- Création des utilisateurs
+CREATE USER admin_biblio IDENTIFIED BY admin123;
+CREATE USER biblio_user IDENTIFIED BY user123;
+CREATE USER membre_user IDENTIFIED BY membre123;
+
+-- Création des rôles
+CREATE ROLE role_admin;
+CREATE ROLE role_bibliothecaire;
+CREATE ROLE role_membre;
+
+-- Attribution des privilèges système au rôle admin
+GRANT CREATE SESSION TO role_admin;
+GRANT CREATE TABLE TO role_admin;
+GRANT CREATE VIEW TO role_admin;
+GRANT CREATE SEQUENCE TO role_admin;
+GRANT UNLIMITED TABLESPACE TO role_admin;
+
+-- Attribution des privilèges au rôle bibliothécaire
+GRANT CREATE SESSION TO role_bibliothecaire;
+GRANT SELECT, INSERT, UPDATE ON LIVRE TO role_bibliothecaire;
+GRANT SELECT, INSERT, UPDATE ON EMPRUNT TO role_bibliothecaire;
+GRANT SELECT ON MEMBRE TO role_bibliothecaire;
+GRANT SELECT ON AUTEUR TO role_bibliothecaire;
+
+-- Attribution des privilèges au rôle membre
+GRANT CREATE SESSION TO role_membre;
+GRANT SELECT ON LIVRE TO role_membre;
+GRANT SELECT ON AUTEUR TO role_membre;
+GRANT SELECT ON CATEGORIE TO role_membre;
+GRANT SELECT ON EMPRUNT TO role_membre;
+
+-- Attribution des rôles aux utilisateurs
+GRANT role_admin TO admin_biblio;
+GRANT role_bibliothecaire TO biblio_user;
+GRANT role_membre TO membre_user;
+
+-- Privilèges spécifiques
+GRANT DELETE ON EMPRUNT TO biblio_user;
+GRANT UPDATE (amende) ON EMPRUNT TO biblio_user;
+              </code></pre>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 4,
+        title: "Phase 5: Vues, Index & Séquences",
+        icon: "eye",
+        content: `
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600">Objets de la Base de Données</h3>
+
+            <div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-auto text-xs code-block">
+              <pre><code>
+-- SÉQUENCES pour génération automatique des IDs
+CREATE SEQUENCE seq_categorie START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_auteur START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_membre START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_bibliothecaire START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_emprunt START WITH 1 INCREMENT BY 1;
+
+-- INDEX pour optimiser les recherches
+CREATE INDEX idx_livre_titre ON LIVRE(titre);
+CREATE INDEX idx_livre_categorie ON LIVRE(id_categorie);
+CREATE INDEX idx_emprunt_membre ON EMPRUNT(id_membre);
+CREATE INDEX idx_emprunt_dates ON EMPRUNT(date_emprunt, date_retour_prevue);
+CREATE INDEX idx_membre_email ON MEMBRE(email);
+
+-- VUE 1: Livres disponibles avec leurs auteurs
+CREATE OR REPLACE VIEW v_livres_disponibles AS
+SELECT 
+    l.isbn,
+    l.titre,
+    l.annee_publication,
+    c.nom_categorie,
+    a.nom || ' ' || a.prenom AS auteur,
+    l.nb_exemplaires
+FROM LIVRE l
+JOIN CATEGORIE c ON l.id_categorie = c.id_categorie
+JOIN LIVRE_AUTEUR la ON l.isbn = la.isbn
+JOIN AUTEUR a ON la.id_auteur = a.id_auteur
+WHERE l.nb_exemplaires > 0;
+
+-- VUE 2: Emprunts en cours
+CREATE OR REPLACE VIEW v_emprunts_en_cours AS
+SELECT 
+    e.id_emprunt,
+    m.nom || ' ' || m.prenom AS membre,
+    l.titre AS livre,
+    e.date_emprunt,
+    e.date_retour_prevue,
+    CASE 
+        WHEN SYSDATE > e.date_retour_prevue 
+        THEN 'En retard'
+        ELSE 'En cours'
+    END AS statut
+FROM EMPRUNT e
+JOIN MEMBRE m ON e.id_membre = m.id_membre
+JOIN LIVRE l ON e.isbn = l.isbn
+WHERE e.date_retour_reelle IS NULL;
+
+-- VUE 3: Statistiques par membre
+CREATE OR REPLACE VIEW v_stats_membres AS
+SELECT 
+    m.id_membre,
+    m.nom || ' ' || m.prenom AS nom_complet,
+    m.type_membre,
+    COUNT(e.id_emprunt) AS nb_emprunts_total,
+    SUM(e.amende) AS total_amendes
+FROM MEMBRE m
+LEFT JOIN EMPRUNT e ON m.id_membre = e.id_membre
+GROUP BY m.id_membre, m.nom, m.prenom, m.type_membre;
+              </code></pre>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 5,
+        title: "Phase 6: Insertion de Données",
+        icon: "table",
+        content: `
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600">Données de Test</h3>
+
+            <div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-auto text-xs code-block">
+              <pre><code>
+-- Insertion des CATEGORIES
+INSERT INTO CATEGORIE VALUES (seq_categorie.NEXTVAL, 'Informatique', 'Livres sur la programmation et les technologies');
+INSERT INTO CATEGORIE VALUES (seq_categorie.NEXTVAL, 'Mathématiques', 'Livres de mathématiques pures et appliquées');
+INSERT INTO CATEGORIE VALUES (seq_categorie.NEXTVAL, 'Littérature', 'Romans et œuvres littéraires');
+INSERT INTO CATEGORIE VALUES (seq_categorie.NEXTVAL, 'Sciences', 'Livres scientifiques généraux');
+
+-- Insertion des AUTEURS
+INSERT INTO AUTEUR VALUES (seq_auteur.NEXTVAL, 'Knuth', 'Donald', 'Américain', TO_DATE('1938-01-10', 'YYYY-MM-DD'));
+INSERT INTO AUTEUR VALUES (seq_auteur.NEXTVAL, 'Cormen', 'Thomas', 'Américain', TO_DATE('1956-06-15', 'YYYY-MM-DD'));
+INSERT INTO AUTEUR VALUES (seq_auteur.NEXTVAL, 'Horstmann', 'Cay', 'Américain', TO_DATE('1959-03-20', 'YYYY-MM-DD'));
+INSERT INTO AUTEUR VALUES (seq_auteur.NEXTVAL, 'Hugo', 'Victor', 'Français', TO_DATE('1802-02-26', 'YYYY-MM-DD'));
+INSERT INTO AUTEUR VALUES (seq_auteur.NEXTVAL, 'Einstein', 'Albert', 'Allemand', TO_DATE('1879-03-14', 'YYYY-MM-DD'));
+
+-- Insertion des LIVRES
+INSERT INTO LIVRE VALUES ('978-0201896831', 'The Art of Computer Programming', 1997, 5, 1);
+INSERT INTO LIVRE VALUES ('978-0262033848', 'Introduction to Algorithms', 2009, 8, 1);
+INSERT INTO LIVRE VALUES ('978-0134685991', 'Core Java Volume I', 2018, 10, 1);
+INSERT INTO LIVRE VALUES ('978-2070368228', 'Les Misérables', 1862, 15, 3);
+INSERT INTO LIVRE VALUES ('978-0486600031', 'Relativity: The Special and General Theory', 1920, 6, 4);
+
+-- Insertion LIVRE_AUTEUR (relation many-to-many)
+INSERT INTO LIVRE_AUTEUR VALUES ('978-0201896831', 1);
+INSERT INTO LIVRE_AUTEUR VALUES ('978-0262033848', 2);
+INSERT INTO LIVRE_AUTEUR VALUES ('978-0134685991', 3);
+INSERT INTO LIVRE_AUTEUR VALUES ('978-2070368228', 4);
+INSERT INTO LIVRE_AUTEUR VALUES ('978-0486600031', 5);
+
+-- Insertion des MEMBRES
+INSERT INTO MEMBRE VALUES (seq_membre.NEXTVAL, 'Ben Ali', 'Ahmed', 'ahmed.benali@univ.tn', '21234567', SYSDATE-365, 'Etudiant');
+INSERT INTO MEMBRE VALUES (seq_membre.NEXTVAL, 'Trabelsi', 'Fatma', 'fatma.trabelsi@univ.tn', '21345678', SYSDATE-200, 'Etudiant');
+INSERT INTO MEMBRE VALUES (seq_membre.NEXTVAL, 'Karoui', 'Mohamed', 'mohamed.karoui@univ.tn', '21456789', SYSDATE-500, 'Professeur');
+INSERT INTO MEMBRE VALUES (seq_membre.NEXTVAL, 'Mansour', 'Leila', 'leila.mansour@univ.tn', '21567890', SYSDATE-100, 'Etudiant');
+
+-- Insertion des BIBLIOTHECAIRES
+INSERT INTO BIBLIOTHECAIRE VALUES (seq_bibliothecaire.NEXTVAL, 'Hammami', 'Jihed', 'jihed.hammami@univ.tn', TO_DATE('2020-09-01', 'YYYY-MM-DD'));
+INSERT INTO BIBLIOTHECAIRE VALUES (seq_bibliothecaire.NEXTVAL, 'Chakroun', 'Samira', 'samira.chakroun@univ.tn', TO_DATE('2019-03-15', 'YYYY-MM-DD'));
+
+-- Insertion des EMPRUNTS
+INSERT INTO EMPRUNT VALUES (seq_emprunt.NEXTVAL, '978-0134685991', 1, 1, SYSDATE-10, SYSDATE+4, NULL, 0);
+INSERT INTO EMPRUNT VALUES (seq_emprunt.NEXTVAL, '978-2070368228', 2, 1, SYSDATE-25, SYSDATE-11, SYSDATE-8, 3.5);
+INSERT INTO EMPRUNT VALUES (seq_emprunt.NEXTVAL, '978-0262033848', 3, 2, SYSDATE-5, SYSDATE+9, NULL, 0);
+INSERT INTO EMPRUNT VALUES (seq_emprunt.NEXTVAL, '978-0486600031', 1, 2, SYSDATE-30, SYSDATE-16, NULL, 7.0);
+
+COMMIT;
+              </code></pre>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 6,
+        title: "Phase 7: Requêtes SQL & Tests",
+        icon: "check-circle",
+        content: `
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600">Démonstrations SQL</h3>
+
+            <div class="space-y-3">
+              <div class="bg-purple-50 p-3 rounded">
+                <h4 class="font-semibold mb-2">A) DDL - Déjà présenté dans Phase 3 & 4</h4>
+              </div>
+
+              <div class="bg-blue-50 p-3 rounded">
+                <h4 class="font-semibold mb-2">B) DML - UPDATE Queries</h4>
+                <div class="bg-gray-900 text-green-400 p-3 rounded text-xs mt-2 code-block">
+                  <pre><code>
+-- UPDATE 1: Augmenter les exemplaires
+UPDATE LIVRE SET nb_exemplaires = nb_exemplaires + 2 
+WHERE isbn = '978-0134685991';
+
+-- UPDATE 2: Marquer retour de livre
+UPDATE EMPRUNT SET date_retour_reelle = SYSDATE, amende = 0 
+WHERE id_emprunt = 1;
+
+-- UPDATE 3: Modifier email membre
+UPDATE MEMBRE SET email = 'ahmed.new@univ.tn' 
+WHERE id_membre = 1;
+                  </code></pre>
+                </div>
+              </div>
+
+              <div class="bg-green-50 p-3 rounded">
+                <h4 class="font-semibold mb-2">C) SELECT Simples</h4>
+                <div class="bg-gray-900 text-green-400 p-3 rounded text-xs mt-2 code-block">
+                  <pre><code>
+-- SELECT 1: Tous les livres
+SELECT * FROM LIVRE;
+
+-- SELECT 2: Membres étudiants
+SELECT nom, prenom, email FROM MEMBRE 
+WHERE type_membre = 'Etudiant';
+
+-- SELECT 3: Livres avec plus de 5 exemplaires
+SELECT titre, nb_exemplaires FROM LIVRE 
+WHERE nb_exemplaires > 5;
+                  </code></pre>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 p-3 rounded">
+                <h4 class="font-semibold mb-2">D) SELECT avec ORDER BY, GROUP BY, HAVING</h4>
+                <div class="bg-gray-900 text-green-400 p-3 rounded text-xs mt-2 code-block">
+                  <pre><code>
+-- Requête 1: Livres triés par année
+SELECT titre, annee_publication 
+FROM LIVRE 
+ORDER BY annee_publication DESC;
+
+-- Requête 2: Nombre d'emprunts par membre
+SELECT m.nom, m.prenom, COUNT(e.id_emprunt) AS nb_emprunts
+FROM MEMBRE m
+LEFT JOIN EMPRUNT e ON m.id_membre = e.id_membre
+GROUP BY m.id_membre, m.nom, m.prenom
+HAVING COUNT(e.id_emprunt) > 0
+ORDER BY nb_emprunts DESC;
+
+-- Requête 3: Catégories avec plus de 2 livres
+SELECT c.nom_categorie, COUNT(l.isbn) AS nb_livres
+FROM CATEGORIE c
+JOIN LIVRE l ON c.id_categorie = l.id_categorie
+GROUP BY c.id_categorie, c.nom_categorie
+HAVING COUNT(l.isbn) >= 2;
+                  </code></pre>
+                </div>
+              </div>
+
+              <div class="bg-red-50 p-3 rounded">
+                <h4 class="font-semibold mb-2">E) JOIN Queries</h4>
+                <div class="bg-gray-900 text-green-400 p-3 rounded text-xs mt-2 code-block">
+                  <pre><code>
+-- JOIN 1: Livres avec leurs auteurs
+SELECT l.titre, a.nom || ' ' || a.prenom AS auteur
+FROM LIVRE l
+INNER JOIN LIVRE_AUTEUR la ON l.isbn = la.isbn
+INNER JOIN AUTEUR a ON la.id_auteur = a.id_auteur;
+
+-- JOIN 2: Emprunts avec détails complets
+SELECT 
+    e.id_emprunt,
+    m.nom || ' ' || m.prenom AS membre,
+    l.titre AS livre,
+    b.nom || ' ' || b.prenom AS bibliothecaire,
+    e.date_emprunt,
+    e.date_retour_prevue
+FROM EMPRUNT e
+INNER JOIN MEMBRE m ON e.id_membre = m.id_membre
+INNER JOIN LIVRE l ON e.isbn = l.isbn
+INNER JOIN BIBLIOTHECAIRE b ON e.id_bibliothecaire = b.id_bibliothecaire;
+
+-- JOIN 3: Membres et leurs emprunts (LEFT JOIN)
+SELECT 
+    m.nom || ' ' || m.prenom AS membre,
+    COUNT(e.id_emprunt) AS nb_emprunts,
+    NVL(SUM(e.amende), 0) AS total_amendes
+FROM MEMBRE m
+LEFT JOIN EMPRUNT e ON m.id_membre = e.id_membre
+GROUP BY m.id_membre, m.nom, m.prenom;
+                  </code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 7,
+        title: "Phase 8: Screenshots des Exécutions SQL",
+        icon: "camera",
+        content: `
+          <div class="space-y-4">
+            <h3 class="text-xl font-bold text-blue-600">Captures d'écran des Exécutions Oracle</h3>
+
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <p class="text-gray-700 mb-2">Voici toutes les captures d'écran montrant l'exécution des requêtes SQL dans Oracle Database :</p>
+              <p class="text-sm text-gray-600">Cliquez sur une image pour l'agrandir dans un nouvel onglet.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"> - Phase 3</h4>
+                <img src="Capture d'écran 2025-12-04 142319.png" alt="Création des tables" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142327.png" alt="Contraintes et clés étrangères" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142342.png" alt="Vérification de la structure" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142351.png" alt="Insertion de données" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142418.png" alt="Création des séquences" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142427.png" alt="Création des vues" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142438.png" alt="Création des index" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142444.png" alt="Création des utilisateurs et rôles" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142453.png" alt="Attribution des privilèges" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142508.png" alt="Privilèges sur les objets" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142514.png" alt="Test de connexion des utilisateurs" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142559.png" alt="Exécution de requêtes SELECT" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142608.png" alt="Exécution de requêtes avec JOIN" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142614.png" alt="Requêtes avec GROUP BY et HAVING" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142622.png" alt="Exécution de requêtes DML" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142631.png" alt="Validation des données insérées" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142638.png" alt="Génération de statistiques" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142646.png" alt="Test des vues matérialisées" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142806.png" alt="Création de procédures stockées" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142815.png" alt="Création de fonctions" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142822.png" alt="Création de triggers" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142827.png" alt="Gestion des transactions" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"> </h4>
+                <img src="Capture d'écran 2025-12-04 142835.png" alt="Test rollback et commit" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142843.png" alt="Optimisation des requêtes" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142856.png" alt="Analyse de performance" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142902.png" alt="Export des données" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142912.png" alt="Import des données" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142928.png" alt="Sauvegarde et restauration" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 142949.png" alt="Rapport final du projet" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 185816.png" alt="Test final session 1" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+
+              <div class="bg-white border-2 border-gray-200 rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <h4 class="font-semibold text-gray-800 mb-2 text-sm"></h4>
+                <img src="Capture d'écran 2025-12-04 190411.png" alt="Test final session 2" class="w-full h-auto rounded cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src, '_blank')">
+              </div>
+            </div>
+
+            <div class="bg-green-50 p-4 rounded-lg mt-6">
+              <h4 class="font-semibold text-green-800 mb-2">✅ Phase 8 Complétée</h4>
+              <p class="text-green-700 text-sm">Toutes les captures d'écran des exécutions SQL ont été documentées avec succès. Ces screenshots démontrent l'implémentation complète du système de gestion de bibliothèque universitaire sous Oracle Database.</p>
+            </div>
+          </div>
+        `
+      }
+    ];
+
+    // initial active index
+    let activeIndex = 0;
+
+    const phasesButtonsEl = document.getElementById('phasesButtons');
+    const phaseContentEl = document.getElementById('phaseContent');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function renderButtons() {
+      phasesButtonsEl.innerHTML = '';
+      phases.forEach((ph, i) => {
+        const btn = document.createElement('button');
+        btn.className = `p-3 rounded-lg transition-all flex flex-col items-center ${activeIndex === i ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`;
+        btn.innerHTML = `<svg data-lucide="${ph.icon}" class="w-6 h-6 mx-auto mb-1"></svg><div class="text-xs font-semibold">Phase ${i + 1}</div>`;
+        btn.addEventListener('click', () => {
+          activeIndex = i;
+          updateUI();
+        });
+        phasesButtonsEl.appendChild(btn);
+      });
+      // re-create lucide icons
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderContent() {
+      const ph = phases[activeIndex];
+      phaseContentEl.innerHTML = `<h2 class="text-2xl font-bold text-indigo-800 mb-4">${ph.title}</h2>${ph.content}`;
+      // ensure any svg placeholders are transformed
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function updateUI() {
+      renderButtons();
+      renderContent();
+      // prev/next buttons disabled state
+      prevBtn.disabled = (activeIndex === 0);
+      nextBtn.disabled = (activeIndex === phases.length - 1);
+      prevBtn.className = `px-6 py-2 rounded-lg font-semibold ${activeIndex === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`;
+      nextBtn.className = `px-6 py-2 rounded-lg font-semibold ${activeIndex === phases.length - 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`;
+    }
+
+    // attach prev/next handlers
+    prevBtn.addEventListener('click', () => {
+      activeIndex = Math.max(0, activeIndex - 1);
+      updateUI();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      activeIndex = Math.min(phases.length - 1, activeIndex + 1);
+      updateUI();
+    });
+
+    // first render
+    updateUI();
+  </script>
+</body>
+</html>
